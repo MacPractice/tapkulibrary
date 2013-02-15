@@ -529,10 +529,10 @@
 }
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
 	//[super touchesBegan:touches withEvent:event];
-	[self reactToTouch:[touches anyObject] down:NO];
+//	[self reactToTouch:[touches anyObject] down:NO];
 } 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
-	[self reactToTouch:[touches anyObject] down:NO];
+//	[self reactToTouch:[touches anyObject] down:NO];
 }
 - (void) touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event{
 	[self reactToTouch:[touches anyObject] down:YES];
@@ -700,10 +700,26 @@
 		i++;
 	}
 	
+	//Adding Gesture Recognizers
+	UISwipeGestureRecognizer *swipeLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(nextMonth)];
+	swipeLeft.direction = UISwipeGestureRecognizerDirectionLeft;
+	UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(prevMonth)];
+	swipeRight.direction = UISwipeGestureRecognizerDirectionRight;
+	[self addGestureRecognizer:swipeLeft];
+	[self addGestureRecognizer:swipeRight];
+	
+	
 	return self;
 }
-
-
+		
+-(void)nextMonth
+{
+	[[self rightArrow] sendActionsForControlEvents:UIControlEventTouchUpInside];
+}
+-(void)prevMonth
+{
+	[[self leftArrow] sendActionsForControlEvents:UIControlEventTouchUpInside];
+}
 - (NSDate*) dateForMonthChange:(UIView*)sender {
 	BOOL isNext = (sender.tag == 1);
 	NSDate *nextMonth = isNext ? [currentTile.monthDate nextMonth] : [currentTile.monthDate previousMonth];
