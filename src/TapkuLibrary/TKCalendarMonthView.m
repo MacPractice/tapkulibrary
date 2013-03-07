@@ -43,6 +43,7 @@
 	SEL action;
 	
 	int firstOfPrev,lastOfPrev;
+
 	NSArray *marks;
 	int today;
 	BOOL markWasOnToday;
@@ -57,7 +58,7 @@
 
 @property (strong,nonatomic) NSDate *monthDate;
 @property (nonatomic, strong) NSMutableArray *accessibleElements;
-
+@property (nonatomic, strong) NSTimeZone *timeZone;
 - (id) initWithMonth:(NSDate*)date marks:(NSArray*)marks startDayOnSunday:(BOOL)sunday;
 - (void) setTarget:(id)target action:(SEL)action;
 
@@ -77,7 +78,6 @@
 
 #pragma mark -
 @implementation TKCalendarMonthTiles
-
 
 #define dotFontSize 18.0
 #define dateFontSize 22.0
@@ -285,8 +285,8 @@
 	r.size.height -= 2;
 	[str drawInRect: r
 		   withFont: f1
-	  lineBreakMode: UILineBreakModeWordWrap 
-		  alignment: UITextAlignmentCenter];
+	  lineBreakMode: NSLineBreakByWordWrapping
+		  alignment: NSTextAlignmentCenter];
 	
 	if(mark){
 		r.size.height = 10;
@@ -294,8 +294,8 @@
 		
 		[@"•" drawInRect: r
 				withFont: f2
-		   lineBreakMode: UILineBreakModeWordWrap 
-			   alignment: UITextAlignmentCenter];
+		   lineBreakMode: NSLineBreakByWordWrapping
+			   alignment: NSTextAlignmentCenter];
 	}
 	
 
@@ -427,13 +427,13 @@
 }
 - (NSDate*) dateSelected{
 	if(selectedDay < 1 || selectedPortion != 1) return nil;
-	
-	TKDateInformation info = [_monthDate dateInformationWithTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+	//NOTE: THIS IS WHERE THE DAY IS CREATED
+	TKDateInformation info = [_monthDate dateInformationWithTimeZone:[self timeZone]];
 	info.hour = 0;
 	info.minute = 0;
 	info.second = 0;
 	info.day = selectedDay;
-	NSDate *d = [NSDate dateFromDateInformation:info timeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+	NSDate *d = [NSDate dateFromDateInformation:info timeZone:[self timeZone]];
 	
 		
 	
@@ -630,7 +630,7 @@
 	
 	NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
 	[dateFormat setDateFormat:@"eee"];
-	[dateFormat setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+	[dateFormat setTimeZone:[self calendarTimezone]];
 	
 	
 	TKDateInformation sund;
@@ -643,7 +643,7 @@
 	sund.weekday = 0;
 	
 	
-	NSTimeZone *tz = [NSTimeZone timeZoneForSecondsFromGMT:0];
+	NSTimeZone *tz = [self calendarTimezone];
 	NSString * sun = [dateFormat stringFromDate:[NSDate dateFromDateInformation:sund timeZone:tz]];
 	
 	sund.day = 6;
@@ -708,7 +708,7 @@
 	BOOL isNext = (sender.tag == 1);
 	NSDate *nextMonth = isNext ? [currentTile.monthDate nextMonth] : [currentTile.monthDate previousMonth];
 	
-	TKDateInformation nextInfo = [nextMonth dateInformationWithTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+	TKDateInformation nextInfo = [nextMonth dateInformationWithTimeZone:[self calendarTimezone]];
 	NSDate *localNextMonth = [NSDate dateFromDateInformation:nextInfo];
 	
 	return localNextMonth;
@@ -719,7 +719,7 @@
 	BOOL isNext = (sender.tag == 1);
 	NSDate *nextMonth = isNext ? [currentTile.monthDate nextMonth] : [currentTile.monthDate previousMonth];
 	
-	TKDateInformation nextInfo = [nextMonth dateInformationWithTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+	TKDateInformation nextInfo = [nextMonth dateInformationWithTimeZone:[self calendarTimezone]];
 	NSDate *localNextMonth = [NSDate dateFromDateInformation:nextInfo];
 	
 	
@@ -823,13 +823,14 @@
 }
 
 - (NSDate*) dateSelected{
+	[currentTile setTimeZone:[self calendarTimezone]];
 	return [currentTile dateSelected];
 }
 - (NSDate*) monthDate{
 	return [currentTile monthDate];
 }
 - (void) selectDate:(NSDate*)date{
-	TKDateInformation info = [date dateInformationWithTimeZone:[NSTimeZone timeZoneWithName:@"GMT"]];
+	TKDateInformation info = [date dateInformationWithTimeZone:[self calendarTimezone]];
 	NSDate *month = [date firstOfMonth];
 	
 	if([month isEqualToDate:[currentTile monthDate]]){
@@ -878,6 +879,14 @@
 	currentTile = refresh;
 	
 }
+- (NSTimeZone *)calendarTimezone
+{
+	if ([[self delegate] respondsToSelector:@selector(timeZoneForCalendarMonthView:)])
+		 {
+			 return [self.delegate timeZoneForCalendarMonthView:self];
+		 }
+	else return [NSTimeZone timeZoneForSecondsFromGMT:0];
+}
 
 - (void) tile:(NSArray*)ar{
 	
@@ -906,10 +915,10 @@
 
 	
 		// thanks rafael
-		TKDateInformation info = [[currentTile monthDate] dateInformationWithTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+		TKDateInformation info = [[currentTile monthDate] dateInformationWithTimeZone:[self calendarTimezone]];
 		info.day = day;
         
-        NSDate *dateForMonth = [NSDate dateFromDateInformation:info  timeZone:[NSTimeZone timeZoneWithName:@"GMT"]]; 
+        NSDate *dateForMonth = [NSDate dateFromDateInformation:info  timeZone:[self calendarTimezone]]; 
 		[currentTile selectDay:day];
 		
 		
