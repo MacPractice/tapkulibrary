@@ -60,6 +60,10 @@
 /** The data soruce must adopt the `TKCalendarMonthViewDataSource` protocol. The data source is not retained. */
 @property (nonatomic,assign) id <TKCalendarMonthViewDataSource> dataSource;
 
+/** the timezone that should be used.
+ @return the set timezone if the delegate method is implemented, otherwide returns GMT
+ */
+- (NSTimeZone *)calendarTimezone;
 /** The current date highlighted on the month grid.
  @return An `NSDate` object set to the month, year and day of the current selection.
  */
@@ -84,7 +88,10 @@
 /** The delegate of a `TKCalendarMonthView` object must adopt the `TKCalendarMonthViewDelegate` protocol. */ 
 @protocol TKCalendarMonthViewDelegate <NSObject>
 @optional
-
+/** 
+ set the time 
+ */
+- (NSTimeZone *) timeZoneForCalendarMonthView:(TKCalendarMonthView *)monthView;
 /** The highlighed date changed.
  @param monthView The calendar month view.
  @param date The highlighted date.
